@@ -14,7 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      payments: {
+        Row: {
+          amount: number
+          asset_code: string
+          coinfello_payment_id: string | null
+          coinfello_quote: Json | null
+          contract_tx_hash: string | null
+          created_at: string
+          destination: string
+          error_message: string | null
+          id: string
+          memo: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          stellar_tx_hash: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          asset_code?: string
+          coinfello_payment_id?: string | null
+          coinfello_quote?: Json | null
+          contract_tx_hash?: string | null
+          created_at?: string
+          destination: string
+          error_message?: string | null
+          id?: string
+          memo?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          stellar_tx_hash?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          asset_code?: string
+          coinfello_payment_id?: string | null
+          coinfello_quote?: Json | null
+          contract_tx_hash?: string | null
+          created_at?: string
+          destination?: string
+          error_message?: string | null
+          id?: string
+          memo?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          stellar_tx_hash?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +73,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      payment_status: "pending" | "quoted" | "submitted" | "settled" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +200,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      payment_status: ["pending", "quoted", "submitted", "settled", "failed"],
+    },
   },
 } as const
