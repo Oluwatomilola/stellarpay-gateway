@@ -1,1 +1,10 @@
 project_id = "zataztbbdxgshhogbyyx"
+
+[functions.coinfello-quote]
+verify_jwt = false
+
+[functions.coinfello-execute]
+verify_jwt = false
+
+[functions.coinfello-status]
+verify_jwt = false
