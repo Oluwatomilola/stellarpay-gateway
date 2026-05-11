@@ -77,7 +77,7 @@ A beginner-friendly Stellar Soroban project that pairs a Rust contract with a Re
 
 ## Requirements Met
 
-- Live demo link: [](https://stellarpay-gateway-omega.vercel.app/)
+- Live demo link: [(https://stellarpay-gateway-omega.vercel.app/)]
 - Demo video link showing full MVP functionality
 - List of 5+ user wallet addresses (verifiable on Stellar Explorer)
 - User feedback documentation or link to feedback document
