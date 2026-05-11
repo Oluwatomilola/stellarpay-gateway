@@ -1,24 +1,36 @@
 import { Button } from "@/components/ui/button";
 import { useFreighter } from "@/hooks/useFreighter";
-import { Wallet, LogOut } from "lucide-react";
+import { Wallet, LogOut, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
+import { isInIframe } from "@/lib/stellar";
 
 export function WalletButton() {
-  const { address, short, connecting, connect, disconnect, network, error } = useFreighter();
+  const { address, short, connecting, connect, disconnect, network } = useFreighter();
 
   const handleConnect = async () => {
     try {
       await connect();
-    } catch {
-      // error is set in hook; surface to user
-    }
-    if (error) {
-      toast({
-        title: "Freighter not detected",
-        description: "Install the Freighter browser extension from freighter.app and refresh.",
-        variant: "destructive",
-      });
+      toast({ title: "Wallet connected", description: "Freighter is ready to sign." });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Could not connect to Freighter";
+      const looksMissing = /not.*(installed|available|detected)|undefined|window\.freighter|user (declined|rejected)/i.test(msg);
+      if (isInIframe()) {
+        toast({
+          title: "Open StellaPay in a new tab",
+          description:
+            "Freighter can't reach the preview inside an iframe. Click the ↗ icon at the top of the preview to open in a new tab, then try again.",
+          variant: "destructive",
+        });
+      } else if (looksMissing) {
+        toast({
+          title: "Freighter not detected",
+          description: "Install the Freighter extension from freighter.app and refresh.",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Connection failed", description: msg, variant: "destructive" });
+      }
     }
   };
 
@@ -47,7 +59,18 @@ export function WalletButton() {
           </button>
         </motion.div>
       ) : (
-        <motion.div key="disconnected" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <motion.div key="disconnected" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2">
+          {isInIframe() && (
+            <a
+              href={typeof window !== "undefined" ? window.location.href : "#"}
+              target="_blank"
+              rel="noreferrer"
+              className="hidden sm:inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+              title="Open in a new tab so Freighter can connect"
+            >
+              <ExternalLink className="h-3 w-3" /> Open in tab
+            </a>
+          )}
           <Button
             onClick={handleConnect}
             disabled={connecting}

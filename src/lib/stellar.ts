@@ -1,8 +1,6 @@
 // Stellar / Freighter helpers
 import {
   isConnected as fIsConnected,
-  isAllowed as fIsAllowed,
-  setAllowed as fSetAllowed,
   requestAccess as fRequestAccess,
   getAddress as fGetAddress,
   getNetwork as fGetNetwork,
@@ -28,14 +26,19 @@ export function shortAddr(addr: string | null | undefined, n = 5) {
   return `${addr.slice(0, n)}…${addr.slice(-n)}`;
 }
 
+export function isInIframe(): boolean {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
 export async function freighterAvailable(): Promise<boolean> {
   try {
-    // Poll briefly — Freighter injects asynchronously
-    for (let i = 0; i < 15; i++) {
-      const res = await fIsConnected();
-      if (res && (res as any).isConnected) return true;
-      // Even if not connected, the extension may be present
-      if (res && !(res as any).error) return true;
+    for (let i = 0; i < 20; i++) {
+      const res: any = await fIsConnected();
+      if (res && (res.isConnected === true || res.isConnected === false)) return true;
       await new Promise((r) => setTimeout(r, 100));
     }
   } catch {
@@ -45,25 +48,26 @@ export async function freighterAvailable(): Promise<boolean> {
 }
 
 export async function connectFreighter(): Promise<string> {
-  // Ensure permission
-  const allowed = await fIsAllowed();
-  if (!(allowed as any)?.isAllowed) {
-    await fSetAllowed();
+  // The Freighter docs recommend calling requestAccess directly on a user
+  // gesture. It triggers the consent popup and returns the address.
+  const access: any = await fRequestAccess();
+  if (access?.error) {
+    const msg = String(access.error?.message || access.error);
+    throw new Error(msg);
   }
-  const access = await fRequestAccess();
-  if ((access as any)?.error) throw new Error((access as any).error);
-  const addr = (access as any)?.address;
-  if (addr) return addr;
-  const got = await fGetAddress();
-  if ((got as any)?.error) throw new Error((got as any).error);
-  return (got as any).address;
+  if (access?.address) return access.address;
+
+  const got: any = await fGetAddress();
+  if (got?.error) throw new Error(String(got.error?.message || got.error));
+  if (!got?.address) throw new Error("No address returned from Freighter");
+  return got.address;
 }
 
 export async function getFreighterNetwork(): Promise<string | null> {
   try {
-    const n = await fGetNetwork();
-    if ((n as any)?.error) return null;
-    return (n as any)?.network ?? null;
+    const n: any = await fGetNetwork();
+    if (n?.error) return null;
+    return n?.network ?? null;
   } catch {
     return null;
   }

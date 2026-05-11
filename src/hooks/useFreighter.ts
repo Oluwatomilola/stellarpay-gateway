@@ -34,7 +34,9 @@ export function useFreighter() {
       const n = await getFreighterNetwork();
       setNetwork(n);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to connect");
+      const msg = e instanceof Error ? e.message : "Failed to connect";
+      setError(msg);
+      throw e;
     } finally {
       setConnecting(false);
     }
