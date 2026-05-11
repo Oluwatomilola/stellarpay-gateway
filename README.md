@@ -74,3 +74,10 @@ A beginner-friendly Stellar Soroban project that pairs a Rust contract with a Re
 - The contract uses `symbol!` keys so that the frontend can always read the last stored payment.
 - The frontend relies on `@stellar/stellar-sdk` for Soroban tooling and `@stellar/freighter-api` to request signatures from the extension.
 - Keep your testnet Freighter wallet funded via Friendbot before attempting transactions.
+
+###
+
+Live demo link: 
+Demo video link showing full MVP functionality
+List of 5+ user wallet addresses (verifiable on Stellar Explorer)
+User feedback documentation or link to feedback document
