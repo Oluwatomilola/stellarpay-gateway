@@ -1,24 +1,26 @@
 import { Button } from "@/components/ui/button";
 import { useFreighter } from "@/hooks/useFreighter";
-import { Wallet, LogOut, AlertTriangle } from "lucide-react";
+import { Wallet, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "@/hooks/use-toast";
 
 export function WalletButton() {
-  const { address, short, available, connecting, connect, disconnect, network } = useFreighter();
+  const { address, short, connecting, connect, disconnect, network, error } = useFreighter();
 
-  if (!available) {
-    return (
-      <a
-        href="https://www.freighter.app/"
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex items-center gap-2 rounded-full border border-warning/40 bg-warning/10 px-4 py-2 text-sm font-medium text-warning hover:bg-warning/20 transition-colors"
-      >
-        <AlertTriangle className="h-4 w-4" />
-        Install Freighter
-      </a>
-    );
-  }
+  const handleConnect = async () => {
+    try {
+      await connect();
+    } catch {
+      // error is set in hook; surface to user
+    }
+    if (error) {
+      toast({
+        title: "Freighter not detected",
+        description: "Install the Freighter browser extension from freighter.app and refresh.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <AnimatePresence mode="wait">
@@ -47,7 +49,7 @@ export function WalletButton() {
       ) : (
         <motion.div key="disconnected" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <Button
-            onClick={connect}
+            onClick={handleConnect}
             disabled={connecting}
             className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow rounded-full px-5"
           >
