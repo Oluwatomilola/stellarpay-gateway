@@ -1,4 +1,13 @@
 // Stellar / Freighter helpers
+import {
+  isConnected as fIsConnected,
+  isAllowed as fIsAllowed,
+  setAllowed as fSetAllowed,
+  requestAccess as fRequestAccess,
+  getAddress as fGetAddress,
+  getNetwork as fGetNetwork,
+} from "@stellar/freighter-api";
+
 export const STELLAR_NETWORK = "TESTNET" as const;
 export const STELLAR_CONTRACT_ID =
   "CA2CPSF57SRXTKGSS2ZBR2FQ2X64O5VMJF6JRFT4PAAN5EDPVYLPX4XN";
@@ -6,11 +15,9 @@ export const STELLAR_CONTRACT_ID =
 export function stellarExpertTx(hash: string) {
   return `https://stellar.expert/explorer/testnet/tx/${hash}`;
 }
-
 export function stellarExpertAccount(addr: string) {
   return `https://stellar.expert/explorer/testnet/account/${addr}`;
 }
-
 export function stellarExpertContract(id: string) {
   return `https://stellar.expert/explorer/testnet/contract/${id}`;
 }
@@ -21,42 +28,43 @@ export function shortAddr(addr: string | null | undefined, n = 5) {
   return `${addr.slice(0, n)}…${addr.slice(-n)}`;
 }
 
-// Freighter detection — Freighter injects window.freighterApi
-declare global {
-  interface Window {
-    freighterApi?: {
-      isConnected: () => Promise<boolean>;
-      getPublicKey: () => Promise<string>;
-      getNetwork: () => Promise<string>;
-      requestAccess?: () => Promise<{ address: string }>;
-      signTransaction?: (xdr: string, opts?: { network?: string; accountToSign?: string }) => Promise<string>;
-    };
-  }
-}
-
 export async function freighterAvailable(): Promise<boolean> {
-  if (typeof window === "undefined") return false;
-  // Freighter injects asynchronously; wait briefly
-  for (let i = 0; i < 10; i++) {
-    if (window.freighterApi) return true;
-    await new Promise((r) => setTimeout(r, 100));
+  try {
+    // Poll briefly — Freighter injects asynchronously
+    for (let i = 0; i < 15; i++) {
+      const res = await fIsConnected();
+      if (res && (res as any).isConnected) return true;
+      // Even if not connected, the extension may be present
+      if (res && !(res as any).error) return true;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  } catch {
+    // ignore
   }
-  return !!window.freighterApi;
+  return false;
 }
 
 export async function connectFreighter(): Promise<string> {
-  if (!(await freighterAvailable())) {
-    throw new Error("Freighter not detected. Install it from freighter.app");
+  // Ensure permission
+  const allowed = await fIsAllowed();
+  if (!(allowed as any)?.isAllowed) {
+    await fSetAllowed();
   }
-  const api = window.freighterApi!;
-  if (api.requestAccess) {
-    const { address } = await api.requestAccess();
-    return address;
-  }
-  return await api.getPublicKey();
+  const access = await fRequestAccess();
+  if ((access as any)?.error) throw new Error((access as any).error);
+  const addr = (access as any)?.address;
+  if (addr) return addr;
+  const got = await fGetAddress();
+  if ((got as any)?.error) throw new Error((got as any).error);
+  return (got as any).address;
 }
 
 export async function getFreighterNetwork(): Promise<string | null> {
-  if (!(await freighterAvailable())) return null;
-  try { return await window.freighterApi!.getNetwork(); } catch { return null; }
+  try {
+    const n = await fGetNetwork();
+    if ((n as any)?.error) return null;
+    return (n as any)?.network ?? null;
+  } catch {
+    return null;
+  }
 }
